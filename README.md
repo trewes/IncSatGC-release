@@ -28,11 +28,12 @@ as solvers too, though the latter has some quirks[[3]](#3).
 For Cadical, the “ipasirup-for-rc2” branch (b3b2c85) has to be used, 
 since the user interface of that version was used for the propagators.
 [Boost](https://www.boost.org/) and ZLIB are also required.
+Further, a binary of [CliSAT](https://github.com/psanse/CliSAT) is used to compute an initial clique.
 
 Then to create and use the binary ``IncSatGC`` it should be as simple as
 ```
 mkdir build && cd build
-cmake .. -DBOOST_ROOT=/path/to/boost -DOPENWBO_ROOT_DIR=/path/to/open-wbo -DCADICAL_ROOT_DIR=/path/to/cadical 
+cmake .. -DBOOST_ROOT=/path/to/boost -DOPENWBO_ROOT_DIR=/path/to/open-wbo -DCADICAL_ROOT_DIR=/path/to/cadical -DCLISAT_BINARY_PATH=/path/to/clisat/binary  
 make
 ```
 

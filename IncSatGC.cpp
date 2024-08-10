@@ -410,12 +410,15 @@ std::vector<Graph::VertexType> IncSatGC::external_get_clique(bool write_graph_ge
     namespace bp = boost::process;
 
     //first check that external CliSAT binary for cliques exists
+    std::filesystem::path CliSAT_path;
 #ifdef CLISAT_BINARY_PATH
-    std::filesystem::path CliSAT_path = CLISAT_BINARY_PATH;
+    CliSAT_path = CLISAT_BINARY_PATH;
     if (not std::filesystem::exists(CliSAT_path)) {
         throw std::runtime_error("The external CliSAT binary does not exist at the specified path.");
     }
 #else
+    std::cout << "WARNING: CliSAT binary was not specified so the algorithm does not use an initial clique, "
+                 "likely degrading performance significantly.\n";
     return {};
 #endif
 
