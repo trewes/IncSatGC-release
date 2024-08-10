@@ -1,0 +1,81 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
+PROJECT(IncSatGC)
+SET(CMAKE_CXX_STANDARD 17)
+SET(SOURCE_FILES main.cpp
+        Graph.cpp Graph.h
+        ExtendSolvers.cpp ExtendSolvers.h
+        Options.cpp Options.h
+        Statistics.cpp Statistics.h
+        CadicalZykovPropagator.cpp CadicalZykovPropagator.h
+        GraphMatrix.cpp GraphMatrix.h
+        CadicalAssignmentPropagator.cpp CadicalAssignmentPropagator.h
+        IncSatGC.cpp IncSatGC.h
+)
+
+####################
+SET(CMAKE_SYSTEM_NAME Linux)
+SET(CMAKE_SYSTEM_PROCESSOR arm)
+####################
+
+ADD_EXECUTABLE(${PROJECT_NAME} ${SOURCE_FILES})
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -g")
+SET(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -g0" )
+
+IF(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+ENDIF()
+
+#where to look for cmake modules, like FindPackage.cmake
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+FIND_PACKAGE(CADICAL REQUIRED)
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} SYSTEM PRIVATE ${CADICAL_INCLUDE_DIR} ) #SYSTEM to supress compiler warning for external library
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE ${CADICAL_LIBRARY})
+
+FIND_PACKAGE(OPENWBO REQUIRED)
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} SYSTEM PRIVATE ${OPENWBO_INCLUDE_DIRS} )
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE ${OPENWBO_LIBRARY})
+
+IF (DEFINED CRYPTOMINISAT AND CRYPTOMINISAT) #compile with cryptominisat dependency
+    FIND_PACKAGE(CRYPTOMINISAT REQUIRED)
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE ${CRYPTOMINISAT_INCLUDE_DIR} )
+    TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE ${CRYPTOMINISAT_LIBRARY})
+    TARGET_COMPILE_DEFINITIONS(${PROJECT_NAME} PRIVATE CRYPTOMINISAT) #sets macro to use CMS
+ENDIF () #do not compile with CMS, do nothing
+
+
+FIND_PACKAGE(ZLIB REQUIRED)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE libz.so)
+
+FIND_PACKAGE(Boost REQUIRED COMPONENTS program_options)
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIR} )
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE Boost::program_options)
+
+#search CliSAT binary
+SET(CLISAT_BINARY_PATH ${PROJECT_SOURCE_DIR}/../CliSAT/bin/CliSAT)
+IF(EXISTS ${CLISAT_BINARY_PATH})
+    MESSAGE("-- Found CliSAT binary at " ${CLISAT_BINARY_PATH})
+    ADD_DEFINITIONS(-DCLISAT_BINARY_PATH="${CLISAT_BINARY_PATH}")
+ELSE()
+    MESSAGE( "Did not find CliSAT binary, not computing initial clique.")
+ENDIF ()
+
+
+IF (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    IF (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+        TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE stdc++fs)
+    ENDIF ()
+ENDIF ()
+
+# make git commit hash available in code, from http://xit0.org/2013/04/cmake-use-git-branch-and-commit-details-in-project/
+# Get the latest abbreviated commit hash of the working branch
+#EXECUTE_PROCESS(
+#        COMMAND git log -1 --format=%h
+#        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#        OUTPUT_VARIABLE GIT_COMMIT_HASH
+#        OUTPUT_STRIP_TRAILING_WHITESPACE
+#)
+#IF (NOT ${GIT_COMMIT_HASH} STREQUAL "")
+#    TARGET_COMPILE_DEFINITIONS(${PROJECT_NAME} PRIVATE "-DGIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\"")
+#ENDIF ()
+
